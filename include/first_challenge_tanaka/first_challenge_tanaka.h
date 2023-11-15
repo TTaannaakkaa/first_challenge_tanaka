@@ -1,3 +1,5 @@
+// 僕のを参考にするとはなかなかセンスがありますねぇ
+
 #ifndef FIRST_CHALLENGE_TANAKA_H
 #define FIRST_CHALLENGE_TANAKA_H
 
@@ -19,7 +21,9 @@ class FirstChallenge
         void laser_callback(const sensor_msgs::LaserScan::ConstPtr&);
         float scan();
 
-        void run(float v,float o);
+        void straight();
+        void turn();
+        void stop();
 
         int hz_;
 

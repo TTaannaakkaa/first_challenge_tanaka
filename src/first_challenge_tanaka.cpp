@@ -18,11 +18,29 @@ void FirstChallenge::laser_callback(const sensor_msgs::LaserScan::ConstPtr& msg)
     laser_ = *msg;
 }
 
-void FirstChallenge::run(float v,float o)
+void FirstChallenge::straight()
 {
     cmd_vel_.mode = 11;
-    cmd_vel_.cntl.linear.x = v;
-    cmd_vel_.cntl.angular.z = o;
+    cmd_vel_.cntl.linear.x = 0.30;
+    cmd_vel_.cntl.angular.z = 0.0;
+
+    cmd_vel_pub_.publish(cmd_vel_);
+}
+
+void FirstChallenge::turn()
+{
+    cmd_vel_.mode = 11;
+    cmd_vel_.cntl.linear.x = 0.0;
+    cmd_vel_.cntl.angular.z = 0.4;
+
+    cmd_vel_pub_.publish(cmd_vel_);
+}
+
+void FirstChallenge::stop()
+{
+    cmd_vel_.mode = 11;
+    cmd_vel_.cntl.linear.x = 0.0;
+    cmd_vel_.cntl.angular.z = 0.0;
 
     cmd_vel_pub_.publish(cmd_vel_);
 }
@@ -41,43 +59,34 @@ float FirstChallenge::scan()
     return ave;
 }
 
-// void GetRPY(const geometry_msgs::Quaternion &q,double &roll,double &pitch,double &yaw)
-// {
-//     tf2::Quaternion quat(q.x,q.y,q.z,q.w);
-//     tf2::Matrix3x3(quad_t).getRPY(roll, pitch, yaw);
-// }
-
 void FirstChallenge::process()
 {
-    float roll, pitch, yaw = 0;
+    float yaw = 0;
     float yaw2 = 2.525;
-    float d = 0;
     int count = 0;
-//    GetRPY(odometry_.pose.pose.orientation, roll, pitch, yaw);
+
     init_angl_ = tf2::getYaw(odometry_.pose.pose.orientation);
 
     ros::Rate loop_rate(hz_);
     while(ros::ok())
     {
-        ros::spinOnce();
         yaw = tf2::getYaw(odometry_.pose.pose.orientation);
 //        printf("yaw = %lf\n",yaw);
-//        GetRPY(odometry_callback_.pose.pose.orientation, roll, pitch, yaw);
         if(odometry_.pose.pose.position.x >= 1.0)
         {
             if(current_angle_ - init_angl_ >= -0.1 && count  > 50)
             {
-                run(0.20,0.0);
+                straight();
 //                printf("d = %f\n",scan());
                 if(scan() <= 0.50)
                 {
-                    run(0.0,0.0);
+                    stop();
                 }
             }
 //            printf("x2 = %f\n", odometry_.pose.pose.position.x);
             else
             {
-                run(0.0,0.40);
+                turn();
                 current_angle_ = yaw;
                 if(current_angle_ < 0.0)
                 {
@@ -89,11 +98,12 @@ void FirstChallenge::process()
         }
         else
         {
-            run(0.40,0);
+            straight();
 //            printf("x1 = %f\n",odometry_.pose.pose.position.x);
         }
 
         loop_rate.sleep();
+        ros::spinOnce();
     }
 }
 
